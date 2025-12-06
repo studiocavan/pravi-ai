@@ -1,107 +1,245 @@
-# Pravi AI - Python AI & LLM Development Examples
+# Pravi AI - Local LLM Chat Application
 
-A comprehensive collection of examples for AI development, LLM interaction, and MCP (Model Context Protocol) server integration using Python.
+A full-stack AI chat application with local LLM hosting, RAG (Retrieval Augmented Generation), and MCP (Model Context Protocol) integration.
 
-## Overview
+## Features
 
-This repository provides practical examples and starter code for:
-- **AI Development**: Machine learning basics, model training, and inference
-- **LLM Integration**: Working with popular LLM APIs (OpenAI, Anthropic Claude, etc.)
-- **MCP Servers**: Interacting with Model Context Protocol servers
+- 🤖 **Local LLM**: Run models locally using Ollama (4-12GB GPU memory)
+- 📚 **RAG System**: Enhanced responses using ChromaDB vector database
+- 🔧 **MCP Integration**: Access to tools and resources via Model Context Protocol
+- 🎨 **Modern UI**: Clean, responsive web interface
+- ⚡ **Fast API**: FastAPI backend with async support
+- 🔒 **Privacy**: Everything runs locally - no data sent to external APIs
+
+## Architecture
+
+```
+┌─────────────┐
+│   Frontend  │  HTML/CSS/JS - User Interface
+│  (Browser)  │
+└──────┬──────┘
+       │ HTTP/REST
+┌──────▼──────┐
+│   Backend   │  FastAPI - API Server
+│  (Python)   │
+└──┬────┬────┬┘
+   │    │    │
+   ▼    ▼    ▼
+┌────┐┌────┐┌────┐
+│LLM ││RAG ││MCP │  Services
+│    ││    ││    │
+└────┘└────┘└────┘
+```
 
 ## Repository Structure
 
 ```
 pravi-ai/
-├── examples/
-│   ├── llm-interaction/      # LLM API examples
-│   ├── mcp-integration/      # MCP server examples
-│   └── ai-basics/            # General AI/ML examples
-├── requirements.txt          # Python dependencies
-├── pyproject.toml           # Project configuration
-└── README.md                # This file
+├── backend/
+│   ├── main.py              # FastAPI application
+│   ├── llm_service.py       # Local LLM integration (Ollama)
+│   ├── rag_service.py       # RAG with ChromaDB
+│   ├── mcp_service.py       # MCP integration
+│   └── requirements.txt     # Python dependencies
+├── frontend/
+│   ├── index.html          # Main UI
+│   ├── style.css           # Styling
+│   └── app.js              # Frontend logic
+├── examples/               # Additional examples
+│   ├── llm-interaction/
+│   ├── mcp-integration/
+│   └── ai-basics/
+├── data/                   # Data directory
+│   └── documents/          # Document storage
+└── README.md              # This file
 ```
 
 ## Quick Start
 
-### Installation
+### Prerequisites
 
-1. Clone the repository:
+- Python 3.8+
+- GPU with 4-12GB VRAM (recommended, but CPU works too)
+- Node.js and npm (for MCP servers)
+
+### 1. Install Ollama
+
+First, install Ollama to run local LLMs:
+
+**Linux:**
 ```bash
-git clone <repository-url>
-cd pravi-ai
+curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-2. Create a virtual environment:
+**macOS:**
 ```bash
+brew install ollama
+```
+
+**Windows:**
+Download from [ollama.com](https://ollama.com)
+
+### 2. Download a Model
+
+Choose a model based on your GPU memory:
+
+```bash
+# For 4-6GB GPU (recommended for most users)
+ollama pull mistral:7b
+
+# For 8-10GB GPU (better performance)
+ollama pull llama3.1:8b
+
+# For 4GB GPU (most efficient)
+ollama pull phi3:mini
+```
+
+Start Ollama server:
+```bash
+ollama serve
+```
+
+### 3. Set Up Backend
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
 
-3. Install dependencies:
-```bash
+# Install dependencies
 pip install -r requirements.txt
+
+# Start the backend server
+python main.py
 ```
 
-### Configuration
+The backend will start on `http://localhost:8000`
 
-Most examples require API keys. Create a `.env` file in the root directory:
+### 4. Open Frontend
 
-```env
-OPENAI_API_KEY=your_openai_key_here
-ANTHROPIC_API_KEY=your_anthropic_key_here
+Simply open `frontend/index.html` in your web browser, or serve it with:
+
+```bash
+cd frontend
+python -m http.server 3000
 ```
 
-## Examples
+Then visit `http://localhost:3000`
 
-### LLM Interaction
+### 5. (Optional) Set Up MCP Server
 
-Examples for working with various LLM providers:
+To enable MCP tools:
 
-- **OpenAI GPT**: `examples/llm-interaction/openai_example.py`
-- **Anthropic Claude**: `examples/llm-interaction/anthropic_example.py`
-- **Streaming Responses**: `examples/llm-interaction/streaming_example.py`
-- **Function Calling**: `examples/llm-interaction/function_calling_example.py`
-
-### MCP Server Integration
-
-Examples for connecting to and using MCP servers:
-
-- **Basic MCP Client**: `examples/mcp-integration/basic_client.py`
-- **Tool Invocation**: `examples/mcp-integration/tool_usage.py`
-- **Resource Management**: `examples/mcp-integration/resource_example.py`
-
-### AI Basics
-
-Fundamental AI/ML concepts and implementations:
-
-- **Text Classification**: `examples/ai-basics/text_classification.py`
-- **Embeddings**: `examples/ai-basics/embeddings_example.py`
-- **RAG (Retrieval Augmented Generation)**: `examples/ai-basics/rag_example.py`
+```bash
+npm install -g @modelcontextprotocol/server-filesystem
+```
 
 ## Usage
 
-Each example is self-contained and can be run independently:
+### Chat Interface
 
+1. Open the web interface
+2. Check that all services show as online (green dots)
+3. Type your question in the input box
+4. Press Enter or click Send
+
+### Features
+
+- **RAG Toggle**: Enable/disable knowledge base retrieval
+- **MCP Toggle**: Enable/disable MCP tools
+- **View Documents**: Browse the knowledge base
+- **Add Documents**: Enhance responses with custom content
+
+## API Endpoints
+
+### Health Check
+```
+GET /health
+```
+
+### Chat
+```
+POST /chat
+{
+  "message": "Your question",
+  "use_rag": true,
+  "use_mcp": false
+}
+```
+
+### Documents
+```
+POST /documents        # Add document
+GET /documents         # List documents
+```
+
+## Recommended Models
+
+| GPU VRAM | Model | Command | Quality |
+|----------|-------|---------|---------|
+| 4GB | Phi-3 Mini | `ollama pull phi3:mini` | Good |
+| 4-6GB | Mistral 7B | `ollama pull mistral:7b` | Excellent |
+| 8-10GB | Llama 3.1 8B | `ollama pull llama3.1:8b` | Excellent |
+| 10-12GB | Gemma 2 9B | `ollama pull gemma2:9b` | Outstanding |
+
+## Troubleshooting
+
+### LLM shows as offline
+- Ensure Ollama is running: `ollama serve`
+- Check you've downloaded a model: `ollama list`
+
+### Slow responses
+- Use a smaller model (phi3:mini)
+- Check GPU is being utilized
+
+### Backend errors
+- Verify port 8000 is available
+- Check all dependencies are installed
+
+## Additional Examples
+
+The `examples/` directory contains standalone examples for:
+
+- **LLM Interaction**: OpenAI, Anthropic, streaming, function calling
+- **MCP Integration**: Client basics, tool usage, resources
+- **AI Basics**: Text classification, embeddings, RAG
+
+Run any example:
 ```bash
 python examples/llm-interaction/openai_example.py
 ```
 
-## Requirements
+## Advanced Configuration
 
-- Python 3.8+
-- API keys for the services you want to use (OpenAI, Anthropic, etc.)
+### Change Default Model
+
+Edit `backend/llm_service.py`:
+```python
+self.default_model = "llama3.1:8b"  # Your preferred model
+```
+
+### Add More MCP Servers
+
+Edit `backend/mcp_service.py` to configure different servers (filesystem, SQLite, GitHub, etc.)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome! Areas for improvement:
+- Streaming responses (WebSocket)
+- Chat history persistence
+- Advanced RAG techniques
+- More MCP integrations
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT License
 
 ## Resources
 
-- [OpenAI API Documentation](https://platform.openai.com/docs)
-- [Anthropic API Documentation](https://docs.anthropic.com)
-- [MCP Protocol Specification](https://spec.modelcontextprotocol.io)
+- [Ollama Documentation](https://ollama.com)
+- [FastAPI Documentation](https://fastapi.tiangolo.com)
+- [ChromaDB Documentation](https://docs.trychroma.com)
+- [MCP Specification](https://spec.modelcontextprotocol.io)
