@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pravi AI - Local LLM Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🤖 Pravi AI</h1>
+            <p class="subtitle">Local LLM with RAG & MCP</p>
+            <div class="status-bar">
+                <span id="status-llm" class="status-indicator">LLM: <span class="status-dot"></span></span>
+                <span id="status-rag" class="status-indicator">RAG: <span class="status-dot"></span></span>
+                <span id="status-mcp" class="status-indicator">MCP: <span class="status-dot"></span></span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="settings-panel">
+                    <h3>Settings</h3>
+
+                    <div class="setting-group">
+                        <label>
+                            <input type="checkbox" id="use-rag" checked>
+                            Enable RAG
+                        </label>
+                        <p class="setting-help">Use knowledge base for context</p>
+                    </div>
+
+                    <div class="setting-group">
+                        <label>
+                            <input type="checkbox" id="use-mcp">
+                            Enable MCP Tools
+                        </label>
+                        <p class="setting-help">Use MCP server capabilities</p>
+                    </div>
+
+                    <button id="clear-chat" class="btn-secondary">Clear Chat</button>
+                </div>
+
+                <div class="info-panel">
+                    <h3>Knowledge Base</h3>
+                    <div id="kb-stats">
+                        <p>Documents: <span id="doc-count">-</span></p>
+                    </div>
+                    <button id="view-docs" class="btn-secondary">View Documents</button>
+                    <button id="add-doc" class="btn-secondary">Add Document</button>
+                </div>
+
+                <div class="info-panel">
+                    <h3>About</h3>
+                    <p class="small-text">
+                        This application uses a local LLM (via Ollama),
+                        RAG for context retrieval, and MCP for tool integration.
+                    </p>
+                </div>
+            </aside>
+
+            <!-- Chat Area -->
+            <main class="chat-container">
+                <div id="chat-messages" class="chat-messages">
+                    <div class="welcome-message">
+                        <h2>👋 Welcome to Pravi AI</h2>
+                        <p>Ask me anything! I use a local LLM with RAG for enhanced responses.</p>
+                        <div class="example-questions">
+                            <p><strong>Try asking:</strong></p>
+                            <button class="example-btn">What is Python?</button>
+                            <button class="example-btn">Explain machine learning</button>
+                            <button class="example-btn">What is RAG?</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <textarea
+                        id="user-input"
+                        placeholder="Type your message here..."
+                        rows="3"
+                    ></textarea>
+                    <button id="send-btn" class="btn-primary">
+                        <span>Send</span>
+                        <span class="keyboard-hint">⏎</span>
+                    </button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal for viewing documents -->
+    <div id="docs-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Knowledge Base Documents</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div id="docs-list" class="modal-body">
+                Loading...
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding documents -->
+    <div id="add-doc-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Document</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <textarea
+                    id="new-doc-content"
+                    placeholder="Paste document content here..."
+                    rows="10"
+                ></textarea>
+                <input
+                    id="new-doc-source"
+                    type="text"
+                    placeholder="Source (optional)"
+                >
+                <button id="submit-doc" class="btn-primary">Add to Knowledge Base</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
