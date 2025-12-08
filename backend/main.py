@@ -12,6 +12,8 @@ import uvicorn
 from rag_service import RAGService
 from llm_service import LLMService
 from mcp_service import MCPService
+from multi_gpu_service import MultiGPUService, ModelPurpose
+import os
 
 # Initialize FastAPI app
 app = FastAPI(title="Pravi AI Backend", version="1.0.0")
@@ -30,18 +32,31 @@ rag_service = RAGService()
 llm_service = LLMService()
 mcp_service = MCPService()
 
+# Multi-GPU service (optional, enabled via environment variable)
+multi_gpu_enabled = os.getenv("ENABLE_MULTI_GPU", "false").lower() == "true"
+multi_gpu_service = None
+
+if multi_gpu_enabled:
+    from multi_gpu_service import create_multi_gpu_service
+    multi_gpu_service = create_multi_gpu_service(
+        config_name=os.getenv("MULTI_GPU_CONFIG", "balanced")
+    )
+
 
 # Request/Response models
 class ChatRequest(BaseModel):
     message: str
     use_rag: bool = True
     use_mcp: bool = False
+    model_name: Optional[str] = None  # For multi-GPU model selection
+    purpose: Optional[str] = None  # For selecting by purpose
 
 
 class ChatResponse(BaseModel):
     response: str
     sources: Optional[List[str]] = None
     mcp_tools_used: Optional[List[str]] = None
+    model_used: Optional[str] = None  # Which model generated the response
 
 
 class DocumentRequest(BaseModel):
@@ -87,12 +102,13 @@ async def chat(request: ChatRequest):
     Main chat endpoint
     - Retrieves relevant context from RAG if enabled
     - Optionally uses MCP tools
-    - Generates response using local LLM
+    - Generates response using local LLM or multi-GPU model
     """
     try:
         sources = []
         mcp_tools_used = []
         context = ""
+        model_used = None
 
         # Get relevant context from RAG
         if request.use_rag:
@@ -108,16 +124,35 @@ async def chat(request: ChatRequest):
                 context += f"\n\nMCP Tools Information:\n{mcp_context['content']}"
                 mcp_tools_used = mcp_context.get('tools_used', [])
 
-        # Generate response using LLM
-        response = await llm_service.generate(
-            prompt=request.message,
-            context=context
-        )
+        # Generate response using multi-GPU if enabled, otherwise use single LLM
+        if multi_gpu_enabled and multi_gpu_service:
+            # Convert purpose string to enum if provided
+            purpose_enum = None
+            if request.purpose:
+                try:
+                    purpose_enum = ModelPurpose(request.purpose)
+                except ValueError:
+                    pass
+
+            response, model_used = await multi_gpu_service.generate(
+                prompt=request.message,
+                context=context,
+                model_name=request.model_name,
+                purpose=purpose_enum
+            )
+        else:
+            response = await llm_service.generate(
+                prompt=request.message,
+                context=context,
+                model=request.model_name
+            )
+            model_used = request.model_name or llm_service.default_model
 
         return ChatResponse(
             response=response,
             sources=sources if sources else None,
-            mcp_tools_used=mcp_tools_used if mcp_tools_used else None
+            mcp_tools_used=mcp_tools_used if mcp_tools_used else None,
+            model_used=model_used
         )
 
     except Exception as e:
@@ -164,8 +199,105 @@ async def list_mcp_tools():
 async def list_models():
     """List available local models"""
     try:
-        models = await llm_service.list_models()
-        return {"models": models}
+        if multi_gpu_enabled and multi_gpu_service:
+            gpu_models = multi_gpu_service.list_models()
+            return {
+                "multi_gpu_enabled": True,
+                "models": gpu_models
+            }
+        else:
+            models = await llm_service.list_models()
+            return {
+                "multi_gpu_enabled": False,
+                "models": models
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Multi-GPU specific endpoints
+@app.get("/gpu/status")
+async def gpu_status():
+    """Get status of all GPUs and their models"""
+    if not multi_gpu_enabled or not multi_gpu_service:
+        return {
+            "enabled": False,
+            "message": "Multi-GPU mode not enabled"
+        }
+
+    try:
+        health = await multi_gpu_service.check_health()
+        models = multi_gpu_service.list_models()
+
+        return {
+            "enabled": True,
+            "models": models,
+            "health": health
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class CompareRequest(BaseModel):
+    prompt: str
+    context: Optional[str] = None
+
+
+@app.post("/gpu/compare")
+async def compare_models(request: CompareRequest):
+    """Compare responses from all GPU models"""
+    if not multi_gpu_enabled or not multi_gpu_service:
+        raise HTTPException(
+            status_code=400,
+            detail="Multi-GPU mode not enabled"
+        )
+
+    try:
+        results = await multi_gpu_service.compare_models(
+            prompt=request.prompt,
+            context=request.context
+        )
+
+        return {
+            "prompt": request.prompt,
+            "responses": results
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class ParallelRequest(BaseModel):
+    prompts: List[str]
+    contexts: Optional[List[str]] = None
+
+
+@app.post("/gpu/parallel")
+async def parallel_generate(request: ParallelRequest):
+    """Generate responses in parallel across GPUs"""
+    if not multi_gpu_enabled or not multi_gpu_service:
+        raise HTTPException(
+            status_code=400,
+            detail="Multi-GPU mode not enabled"
+        )
+
+    try:
+        results = await multi_gpu_service.parallel_generate(
+            prompts=request.prompts,
+            contexts=request.contexts
+        )
+
+        return {
+            "results": [
+                {
+                    "response": response,
+                    "model": model_name
+                }
+                for response, model_name in results
+            ]
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

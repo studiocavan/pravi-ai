@@ -5,6 +5,7 @@ A full-stack AI chat application with local LLM hosting, RAG (Retrieval Augmente
 ## Features
 
 - 🤖 **Local LLM**: Run models locally using Ollama (4-12GB GPU memory)
+- 🚀 **Multi-GPU Support**: Leverage 2+ GPUs for parallel processing and specialized models
 - 📚 **RAG System**: Enhanced responses using ChromaDB vector database
 - 🔧 **MCP Integration**: Access to tools and resources via Model Context Protocol
 - 🎨 **Modern UI**: Clean, responsive web interface
@@ -213,6 +214,51 @@ python examples/llm-interaction/openai_example.py
 ```
 
 ## Advanced Configuration
+
+### Multi-GPU Setup (2+ GPUs)
+
+**Leverage multiple GPUs for parallel processing and specialized models!**
+
+Benefits:
+- 2x throughput with dual GPUs
+- Run specialized models (e.g., coding + general)
+- Parallel request processing
+- Compare model responses
+
+**Quick Start:**
+
+1. Start Ollama on multiple GPUs:
+```bash
+# Terminal 1 - GPU 0
+CUDA_VISIBLE_DEVICES=0 ollama serve
+
+# Terminal 2 - GPU 1
+CUDA_VISIBLE_DEVICES=1 OLLAMA_HOST=0.0.0.0:11435 ollama serve
+```
+
+2. Download models for each GPU:
+```bash
+# GPU 0: Fast model
+OLLAMA_HOST=localhost:11434 ollama pull mistral:7b
+
+# GPU 1: Code specialist
+OLLAMA_HOST=localhost:11435 ollama pull codellama:7b
+```
+
+3. Enable multi-GPU in backend (create `.env` file):
+```env
+ENABLE_MULTI_GPU=true
+MULTI_GPU_CONFIG=balanced
+```
+
+4. Restart backend and enjoy 2x performance!
+
+**See [MULTI_GPU_SETUP.md](MULTI_GPU_SETUP.md) for complete guide.**
+
+**Run example:**
+```bash
+python examples/multi-gpu-example.py
+```
 
 ### Change Default Model
 
