@@ -121,30 +121,59 @@ echo ""
 print_info "Setting up Python virtual environment..."
 echo ""
 
-cd "$PROJECT_ROOT"
+# Ensure we're in the project root
+cd "$PROJECT_ROOT" || {
+    print_error "Failed to change to project directory: $PROJECT_ROOT"
+    exit 1
+}
+
+print_info "Working directory: $(pwd)"
 
 # Create virtual environment
 if [ ! -d "venv" ]; then
-    python3 -m venv venv
+    print_info "Creating virtual environment..."
+    python3 -m venv venv || {
+        print_error "Failed to create virtual environment"
+        exit 1
+    }
     print_success "Virtual environment created"
 else
     print_info "Virtual environment already exists"
 fi
 
+# Verify venv exists
+if [ ! -f "venv/bin/activate" ]; then
+    print_error "Virtual environment activation script not found"
+    print_error "Expected: $(pwd)/venv/bin/activate"
+    exit 1
+fi
+
 # Activate virtual environment
-source venv/bin/activate
+print_info "Activating virtual environment..."
+source venv/bin/activate || {
+    print_error "Failed to activate virtual environment"
+    exit 1
+}
+
+print_success "Virtual environment activated"
 
 # Upgrade pip
 print_info "Upgrading pip..."
-pip install --upgrade pip > /dev/null 2>&1
+pip install --upgrade pip > /dev/null 2>&1 || print_warning "Failed to upgrade pip"
 
 # Install backend dependencies
 print_info "Installing backend dependencies..."
-cd backend
-pip install -r requirements.txt
-print_success "Backend dependencies installed"
+if [ ! -f "backend/requirements.txt" ]; then
+    print_error "backend/requirements.txt not found"
+    exit 1
+fi
 
-cd ..
+pip install -r backend/requirements.txt || {
+    print_error "Failed to install backend dependencies"
+    exit 1
+}
+
+print_success "Backend dependencies installed"
 
 # Ask about model installation
 echo ""
@@ -284,19 +313,31 @@ read -p "Would you like to start the backend now? [y/N]: " start_now
 if [[ $start_now =~ ^[Yy]$ ]]; then
     print_info "Starting Ollama..."
 
+    # Create logs directory if it doesn't exist
+    mkdir -p "$PROJECT_ROOT/logs"
+
     # Check if Ollama is already running
     if pgrep -x "ollama" > /dev/null; then
         print_info "Ollama is already running"
     else
         # Start Ollama in background
-        nohup ollama serve > logs/ollama.log 2>&1 &
+        nohup ollama serve > "$PROJECT_ROOT/logs/ollama.log" 2>&1 &
         sleep 2
-        print_success "Ollama started"
+        print_success "Ollama started (logs: logs/ollama.log)"
     fi
 
     print_info "Starting backend server..."
-    cd backend
-    source ../venv/bin/activate
+
+    # Ensure we're in project root
+    cd "$PROJECT_ROOT" || exit 1
+
+    # Activate venv (should already be activated, but just in case)
+    if [ -f "venv/bin/activate" ]; then
+        source venv/bin/activate
+    fi
+
+    # Start backend
+    cd backend || exit 1
     python main.py
 else
     print_info "Setup complete! Follow the steps above to start the application."
