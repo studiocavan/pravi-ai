@@ -1,5 +1,10 @@
 // Configuration
-const API_BASE_URL = 'http://localhost:8000';
+// Auto-detect API URL based on environment
+const API_BASE_URL = window.location.hostname === 'localhost' && window.location.port === ''
+    ? 'http://localhost:8000'  // Direct file access
+    : window.location.port === '3000'
+    ? '/api'  // Docker/nginx proxy
+    : 'http://localhost:8000';  // Development server
 
 // State
 let chatHistory = [];

@@ -12,6 +12,16 @@ A full-stack AI chat application with local LLM hosting, RAG (Retrieval Augmente
 - ⚡ **Fast API**: FastAPI backend with async support
 - 🔒 **Privacy**: Everything runs locally - no data sent to external APIs
 
+## 🚀 Quick Start
+
+**Want to get started immediately?** See [QUICKSTART.md](QUICKSTART.md) for the fastest ways to run Pravi AI:
+
+- **Automated**: `./scripts/setup.sh` - One command setup
+- **Docker**: `make docker-up` - Instant deployment
+- **Kubernetes**: `make k8s-deploy` - Production ready
+
+Full setup instructions below ↓
+
 ## Architecture
 
 ```
