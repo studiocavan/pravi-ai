@@ -9,6 +9,14 @@ const API_BASE_URL = window.location.hostname === 'localhost' && window.location
 // State
 let chatHistory = [];
 
+// Utility function to escape HTML and prevent XSS
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    const div = document.createElement('div');
+    div.textContent = unsafe;
+    return div.innerHTML;
+}
+
 // DOM Elements
 const chatMessages = document.getElementById('chat-messages');
 const userInput = document.getElementById('user-input');
@@ -103,10 +111,14 @@ function updateStatusIndicator(id, isOnline) {
 async function loadKBStats() {
     try {
         const response = await fetch(`${API_BASE_URL}/documents`);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
         const data = await response.json();
         document.getElementById('doc-count').textContent = data.documents.length;
     } catch (error) {
         console.error('Failed to load KB stats:', error);
+        document.getElementById('doc-count').textContent = '?';
     }
 }
 
@@ -145,6 +157,11 @@ async function sendMessage() {
                 use_mcp: useMcpCheckbox.checked
             })
         });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server error (${response.status}): ${errorText}`);
+        }
 
         const data = await response.json();
 
@@ -189,14 +206,16 @@ function addMessageToChat(role, content, metadata = {}) {
     if (metadata.sources && metadata.sources.length > 0) {
         const sourcesDiv = document.createElement('div');
         sourcesDiv.className = 'message-sources';
-        sourcesDiv.innerHTML = `<strong>Sources:</strong> ${metadata.sources.join(', ')}`;
+        const sourcesText = metadata.sources.map(s => escapeHtml(s)).join(', ');
+        sourcesDiv.innerHTML = `<strong>Sources:</strong> ${sourcesText}`;
         contentDiv.appendChild(sourcesDiv);
     }
 
     if (metadata.mcp_tools_used && metadata.mcp_tools_used.length > 0) {
         const toolsDiv = document.createElement('div');
         toolsDiv.className = 'message-metadata';
-        toolsDiv.innerHTML = `MCP Tools: ${metadata.mcp_tools_used.join(', ')}`;
+        const toolsText = metadata.mcp_tools_used.map(t => escapeHtml(t)).join(', ');
+        toolsDiv.innerHTML = `MCP Tools: ${toolsText}`;
         contentDiv.appendChild(toolsDiv);
     }
 
@@ -282,6 +301,9 @@ async function loadDocuments() {
 
     try {
         const response = await fetch(`${API_BASE_URL}/documents`);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
         const data = await response.json();
 
         if (data.documents.length === 0) {
@@ -291,14 +313,14 @@ async function loadDocuments() {
 
         docsList.innerHTML = data.documents.map(doc => `
             <div class="document-item">
-                <strong>${doc.metadata.source || 'Unknown Source'}</strong>
-                <p>${doc.content}</p>
-                <small>ID: ${doc.id}</small>
+                <strong>${escapeHtml(doc.metadata.source || 'Unknown Source')}</strong>
+                <p>${escapeHtml(doc.content)}</p>
+                <small>ID: ${escapeHtml(doc.id)}</small>
             </div>
         `).join('');
 
     } catch (error) {
-        docsList.innerHTML = `<p>Error loading documents: ${error.message}</p>`;
+        docsList.innerHTML = `<p>Error loading documents: ${escapeHtml(error.message)}</p>`;
     }
 }
 

@@ -18,7 +18,9 @@ metadata:
   namespace: pravi-ai
 spec:
   accessModes:
-    - ReadWriteOnce
+    # ReadWriteMany needed for multiple backend replicas
+    # If your storage class doesn't support RWX, use ReadWriteOnce and set replicas: 1
+    - ReadWriteMany
   resources:
     requests:
       storage: 10Gi

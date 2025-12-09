@@ -6,8 +6,11 @@ Enables parallel processing and specialized model assignments
 import httpx
 from typing import Optional, List, Dict, Tuple
 import asyncio
+import logging
 from dataclasses import dataclass
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class ModelPurpose(Enum):
@@ -80,7 +83,7 @@ class MultiGPUService:
         )
 
         self.models[model_name] = gpu_model
-        print(f"Registered {model_name} on GPU {gpu_id} at {model_url}")
+        logger.info(f"Registered {model_name} on GPU {gpu_id} at {model_url}")
 
     def get_model_by_purpose(self, purpose: ModelPurpose) -> Optional[GPUModel]:
         """Get a model by its purpose"""

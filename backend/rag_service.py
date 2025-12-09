@@ -8,6 +8,9 @@ from chromadb.config import Settings
 from typing import List, Dict, Optional
 import uuid
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class RAGService:
@@ -152,7 +155,7 @@ class RAGService:
             return documents
 
         except Exception as e:
-            print(f"Search error: {e}")
+            logger.error(f"Search error: {e}")
             return []
 
     def delete_document(self, doc_id: str) -> bool:
@@ -187,7 +190,7 @@ class RAGService:
             return documents
 
         except Exception as e:
-            print(f"List error: {e}")
+            logger.error(f"List error: {e}")
             return []
 
     def get_stats(self) -> Dict:
@@ -251,4 +254,4 @@ class RAGService:
         metadatas = [doc["metadata"] for doc in initial_docs]
 
         self.add_documents_batch(documents=documents, metadatas=metadatas)
-        print(f"Loaded {len(documents)} initial documents into knowledge base")
+        logger.info(f"Loaded {len(documents)} initial documents into knowledge base")

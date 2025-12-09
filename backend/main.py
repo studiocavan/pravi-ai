@@ -8,12 +8,31 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
+import logging
 
 from rag_service import RAGService
 from llm_service import LLMService
 from mcp_service import MCPService
 from multi_gpu_service import MultiGPUService, ModelPurpose
 import os
+
+# Configure logging
+handlers = [logging.StreamHandler()]
+# Try to add file handler if logs directory exists
+if os.path.exists('logs') or os.path.exists('../logs'):
+    log_path = 'logs/backend.log' if os.path.exists('logs') else '../logs/backend.log'
+    try:
+        handlers.append(logging.FileHandler(log_path, mode='a'))
+    except Exception:
+        pass  # Fallback to console-only logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=handlers
+)
+
+logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(title="Pravi AI Backend", version="1.0.0")

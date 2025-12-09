@@ -1,3 +1,7 @@
+# IMPORTANT: Before deploying, create the frontend-files ConfigMap:
+# Run: ./k8s/create-frontend-configmap.sh
+# Or: kubectl create configmap frontend-files --from-file=frontend/ -n pravi-ai
+
 apiVersion: v1
 kind: ConfigMap
 metadata:

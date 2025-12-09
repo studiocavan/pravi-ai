@@ -5,8 +5,13 @@ Provides access to MCP tools and resources
 
 from typing import List, Dict, Optional
 import asyncio
+import os
+import tempfile
+import logging
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+
+logger = logging.getLogger(__name__)
 
 
 class MCPService:
@@ -23,16 +28,20 @@ class MCPService:
     def _configure_server(self):
         """Configure MCP server connection"""
         try:
+            # Get cross-platform temp directory
+            # Can be overridden with MCP_FS_PATH environment variable
+            fs_path = os.getenv("MCP_FS_PATH", tempfile.gettempdir())
+
             # Using the filesystem MCP server as an example
             # You can change this to other MCP servers
             self.server_params = StdioServerParameters(
                 command="npx",
-                args=["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+                args=["-y", "@modelcontextprotocol/server-filesystem", fs_path],
                 env=None
             )
             self.enabled = True
         except Exception as e:
-            print(f"MCP server configuration failed: {e}")
+            logger.warning(f"MCP server configuration failed: {e}")
             self.enabled = False
 
     async def check_health(self) -> bool:
@@ -72,7 +81,7 @@ class MCPService:
                     return tools
 
         except Exception as e:
-            print(f"Error listing MCP tools: {e}")
+            logger.error(f"Error listing MCP tools: {e}")
             return []
 
     async def call_tool(
@@ -111,7 +120,7 @@ class MCPService:
                     return "\n".join(content_parts)
 
         except Exception as e:
-            print(f"Error calling MCP tool {tool_name}: {e}")
+            logger.error(f"Error calling MCP tool {tool_name}: {e}")
             return None
 
     async def list_resources(self) -> List[Dict]:
@@ -138,7 +147,7 @@ class MCPService:
                     return resources
 
         except Exception as e:
-            print(f"Error listing MCP resources: {e}")
+            logger.error(f"Error listing MCP resources: {e}")
             return []
 
     async def read_resource(self, resource_uri: str) -> Optional[str]:
@@ -161,7 +170,7 @@ class MCPService:
                     return "\n".join(content_parts)
 
         except Exception as e:
-            print(f"Error reading MCP resource: {e}")
+            logger.error(f"Error reading MCP resource: {e}")
             return None
 
     async def process_query(self, query: str) -> Optional[Dict]:
@@ -215,7 +224,7 @@ class MCPService:
             return None
 
         except Exception as e:
-            print(f"Error processing MCP query: {e}")
+            logger.error(f"Error processing MCP query: {e}")
             return None
 
 

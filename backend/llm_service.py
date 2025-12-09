@@ -4,16 +4,21 @@ Supports models that use 4-12GB GPU memory
 """
 
 import httpx
+import os
 from typing import Optional, List, Dict
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LLMService:
     """Service for interacting with local LLM via Ollama"""
 
-    def __init__(self, base_url: str = "http://localhost:11434"):
-        self.base_url = base_url
-        self.default_model = "llama3.1:8b"  # ~8GB GPU memory
+    def __init__(self, base_url: Optional[str] = None):
+        # Read from environment variable, fallback to parameter, then default
+        self.base_url = base_url or os.getenv("OLLAMA_HOST", "http://localhost:11434")
+        self.default_model = os.getenv("DEFAULT_MODEL", "llama3.1:8b")  # ~8GB GPU memory
         # Other good options:
         # - mistral:7b (~4GB)
         # - phi3:mini (~4GB)
@@ -39,7 +44,7 @@ class LLMService:
                     return data.get("models", [])
                 return []
         except Exception as e:
-            print(f"Error listing models: {e}")
+            logger.error(f"Error listing models: {e}")
             return []
 
     async def generate(
@@ -170,7 +175,7 @@ Answer:"""
                 )
                 return response.status_code == 200
         except Exception as e:
-            print(f"Error pulling model: {e}")
+            logger.error(f"Error pulling model: {e}")
             return False
 
 
