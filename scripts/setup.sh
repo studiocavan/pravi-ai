@@ -141,16 +141,25 @@ else
     print_info "Virtual environment already exists"
 fi
 
-# Verify venv exists
-if [ ! -f "venv/bin/activate" ]; then
+# Detect OS and set activation script path
+VENV_ACTIVATE=""
+if [ -f "venv/bin/activate" ]; then
+    VENV_ACTIVATE="venv/bin/activate"
+elif [ -f "venv/Scripts/activate" ]; then
+    VENV_ACTIVATE="venv/Scripts/activate"
+else
     print_error "Virtual environment activation script not found"
-    print_error "Expected: $(pwd)/venv/bin/activate"
+    print_error "Checked:"
+    print_error "  - $(pwd)/venv/bin/activate (Unix/Linux/macOS)"
+    print_error "  - $(pwd)/venv/Scripts/activate (Windows)"
     exit 1
 fi
 
+print_info "Found activation script: $VENV_ACTIVATE"
+
 # Activate virtual environment
 print_info "Activating virtual environment..."
-source venv/bin/activate || {
+source "$VENV_ACTIVATE" || {
     print_error "Failed to activate virtual environment"
     exit 1
 }
@@ -334,6 +343,8 @@ if [[ $start_now =~ ^[Yy]$ ]]; then
     # Activate venv (should already be activated, but just in case)
     if [ -f "venv/bin/activate" ]; then
         source venv/bin/activate
+    elif [ -f "venv/Scripts/activate" ]; then
+        source venv/Scripts/activate
     fi
 
     # Start backend

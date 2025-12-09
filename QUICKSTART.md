@@ -6,9 +6,14 @@ Choose your preferred method to get Pravi AI running in minutes.
 
 **Best for**: First-time users, development
 
+**Linux/macOS/Git Bash:**
 ```bash
-# One command to rule them all
 ./scripts/setup.sh
+```
+
+**Windows (Command Prompt/PowerShell):**
+```cmd
+scripts\setup.bat
 ```
 
 This interactive script will:
